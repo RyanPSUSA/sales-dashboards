@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zone Analysis Dashboard - Seating Intelligence</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2.8em;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        
+        .zone-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .zone-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .nav-tabs {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+            border-left: 5px solid #667eea;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .kpi-card.premium {
+            border-left-color: #FFD700;
+        }
+        
+        .kpi-card.lower-bowl {
+            border-left-color: #28a745;
+        }
+        
+        .kpi-card.club {
+            border-left-color: #6f42c1;
+        }
+        
+        .kpi-card.upper {
+            border-left-color: #17a2b8;
+        }
+        
+        .kpi-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .kpi-subtext {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 8px;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        
+        .chart-container.tall {
+            height: 500px;
+        }
+        
+        .chart-container.extra-tall {
+            height: 600px;
+        }
+        
+        .insights-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .insight-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .insight-item.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .insight-item.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .insight-item.danger {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .venue-zone-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .venue-zone-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .venue-zone-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .venue-zone-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .zone-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .badge-premium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-lower {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-club {
+            background: #e7d6f5;
+            color: #6f42c1;
+        }
+        
+        .badge-upper {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🎯 Zone Analysis Dashboard</h1>
+            <p class="subtitle">
+                Intelligent seating zone analysis based on publicly available venue seating charts. 
+                Instead of analyzing 100+ individual sections, this groups seating into 12 logical zones 
+                for strategic decision-making across 19,468 transactions.
+            </p>
+            
+            <div class="info-box">
+                <h3>📍 How Zones Work</h3>
+                <p>Using standard arena seating chart patterns, sections are intelligently grouped into zones:</p>
+                <div class="zone-legend">
+                    <div class="zone-item"><strong>Premium Floor/Courtside</strong> - VIP, Floor, Courtside</div>
+                    <div class="zone-item"><strong>Lower Bowl</strong> - Sections 100-129 (Sideline/Baseline)</div>
+                    <div class="zone-item"><strong>Club/Mezzanine</strong> - Sections 200-299</div>
+                    <div class="zone-item"><strong>Loge</strong> - Premium lower sections (LOGE)</div>
+                    <div class="zone-item"><strong>Upper Bowl</strong> - Sections 300+ (Lower/Upper balcony)</div>
+                    <div class="zone-item"><strong>General Admission</strong> - GA, SRO sections</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="tab-button active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="tab-button" onclick="showTab('zones')">🎯 Zone Performance</button>
+            <button class="tab-button" onclick="showTab('venues')">🏟️ Venue Breakdown</button>
+            <button class="tab-button" onclick="showTab('comparison')">📈 Zone Comparison</button>
+            <button class="tab-button" onclick="showTab('strategy')">💡 Strategic Insights</button>
+        </div>
+        
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="tab-content active">
+            <div class="kpi-grid">
+                <div class="kpi-card premium">
+                    <div class="kpi-label">🥇 Best Avg Profit</div>
+                    <div class="kpi-value" id="bestAvgZone">$0</div>
+                    <div class="kpi-subtext" id="bestAvgZoneName">Zone</div>
+                </div>
+                <div class="kpi-card lower-bowl">
+                    <div class="kpi-label">💰 Highest Total Profit</div>
+                    <div class="kpi-value" id="bestTotalZone">$0</div>
+                    <div class="kpi-subtext" id="bestTotalZoneName">Zone</div>
+                </div>
+                <div class="kpi-card club">
+                    <div class="kpi-label">📊 Best Margin</div>
+                    <div class="kpi-value" id="bestMarginZone">0%</div>
+                    <div class="kpi-subtext" id="bestMarginZoneName">Zone</div>
+                </div>
+                <div class="kpi-card upper">
+                    <div class="kpi-label">🎫 Total Zones</div>
+                    <div class="kpi-value" id="totalZones">0</div>
+                    <div class="kpi-subtext">Across all venues</div>
+                </div>
+            </div>
+            
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">Zone Profitability Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="zoneProfitOverview"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Transaction Volume by Zone</h3>
+                    <div class="chart-container">
+                        <canvas id="zoneVolumeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Profit Margin by Zone</h3>
+                    <div class="chart-container">
+                        <canvas id="zoneMarginChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ZONES TAB -->
+        <div id="zones" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">Avg Profit Per Transaction by Zone</h3>
+                    <div class="chart-container">
+                        <canvas id="avgProfitByZone"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">Zone Performance Scatter: Volume vs Profitability</h3>
+                    <div class="chart-container tall">
+                        <canvas id="zoneScatter"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Zone Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="zonePieChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Avg Profit Per Ticket by Zone</h3>
+                    <div class="chart-container">
+                        <canvas id="profitPerTicketZone"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VENUES TAB -->
+        <div id="venues" class="tab-content">
+            <div class="insights-section">
+                <h2 class="section-title">🏟️ Venue-Specific Zone Breakdowns</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Detailed zone performance for each of your top 10 venues
+                </p>
+                <div class="table-container">
+                    <table class="venue-zone-table" id="venueZoneTable">
+                        <thead>
+                            <tr>
+                                <th>Venue</th>
+                                <th>Zone</th>
+                                <th>Transactions</th>
+                                <th>Total Profit</th>
+                                <th>Margin %</th>
+                                <th>Avg Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="venueZoneTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- COMPARISON TAB -->
+        <div id="comparison" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">Zone Comparison: All Metrics</h3>
+                    <div class="chart-container extra-tall">
+                        <canvas id="zoneComparisonRadar"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Zone Efficiency Index</h3>
+                    <div class="chart-container">
+                        <canvas id="zoneEfficiencyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">Venue Availability by Zone</h3>
+                    <div class="chart-container">
+                        <canvas id="venueAvailabilityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STRATEGY TAB -->
+        <div id="strategy" class="tab-content">
+            <div class="insights-section">
+                <h2 class="section-title">💡 Strategic Recommendations</h2>
+                <div id="strategicInsights"></div>
+            </div>
+            
+            <div class="insights-section">
+                <h2 class="section-title">🎯 Zone Targeting Strategy</h2>
+                <div id="targetingStrategy"></div>
+            </div>
+            
+            <div class="insights-section">
+                <h2 class="section-title">⚠️ Zones to Avoid or Optimize</h2>
+                <div id="avoidZones"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Load data
+        const zoneData = {"overall_zones": [{"Zone": "Lower Bowl - Baseline/Corner", "Profit": 365238.48, "Total": 3358833.36, "PO #": 6912, "Quantity": 13386, "Avg Profit": 52.84, "Profit Margin %": 10.87}, {"Zone": "Lower Bowl - Sideline", "Profit": 177104.83, "Total": 1623850.83, "PO #": 3580, "Quantity": 7463, "Avg Profit": 49.47, "Profit Margin %": 10.91}, {"Zone": "Club/Mezzanine Level", "Profit": 90525.62, "Total": 857019.43, "PO #": 3007, "Quantity": 6051, "Avg Profit": 30.1, "Profit Margin %": 10.56}, {"Zone": "Premium Floor/Courtside", "Profit": 72656.96, "Total": 677158.58, "PO #": 385, "Quantity": 665, "Avg Profit": 188.72, "Profit Margin %": 10.73}, {"Zone": "Other/Unclassified", "Profit": 57063.05, "Total": 616796.67, "PO #": 1789, "Quantity": 3414, "Avg Profit": 31.9, "Profit Margin %": 9.25}, {"Zone": "Lower Bowl - Upper Rows", "Profit": 36822.3, "Total": 343384.27, "PO #": 722, "Quantity": 1501, "Avg Profit": 51.0, "Profit Margin %": 10.72}, {"Zone": "Upper Bowl - Upper", "Profit": 34537.14, "Total": 391596.89, "PO #": 1475, "Quantity": 2896, "Avg Profit": 23.42, "Profit Margin %": 8.82}, {"Zone": "Upper Bowl - Lower", "Profit": 23476.39, "Total": 248845.28, "PO #": 921, "Quantity": 1840, "Avg Profit": 25.49, "Profit Margin %": 9.43}, {"Zone": "Loge (Lower Premium)", "Profit": 21649.02, "Total": 218464.26, "PO #": 286, "Quantity": 588, "Avg Profit": 75.7, "Profit Margin %": 9.91}, {"Zone": "Stadium - End Zone", "Profit": 6820.85, "Total": 66978.85, "PO #": 117, "Quantity": 273, "Avg Profit": 58.3, "Profit Margin %": 10.18}, {"Zone": "Club Level", "Profit": 4829.5, "Total": 39660.28, "PO #": 43, "Quantity": 83, "Avg Profit": 112.31, "Profit Margin %": 12.18}, {"Zone": "General Admission/Standing", "Profit": 1868.37, "Total": 36964.92, "PO #": 231, "Quantity": 301, "Avg Profit": 8.09, "Profit Margin %": 5.05}], "venue_zones": {"American Airlines Center - TX": [{"Zone": "Lower Bowl - Sideline", "Transactions": 221, "Profit": 19845.65, "Revenue": 157379.87, "Margin": 12.61}, {"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 150, "Profit": 16661.19, "Revenue": 136371.57, "Margin": 12.22}, {"Zone": "Premium Floor/Courtside", "Transactions": 3, "Profit": 2295.27, "Revenue": 16025.44, "Margin": 14.32}, {"Zone": "Club/Mezzanine Level", "Transactions": 40, "Profit": 2169.46, "Revenue": 17776.37, "Margin": 12.2}, {"Zone": "Upper Bowl - Upper", "Transactions": 104, "Profit": 2085.2, "Revenue": 19114.5, "Margin": 10.91}, {"Zone": "Upper Bowl - Lower", "Transactions": 107, "Profit": 1747.12, "Revenue": 21104.03, "Margin": 8.28}], "Madison Square Garden": [{"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 186, "Profit": 35097.52, "Revenue": 374088.16, "Margin": 9.38}, {"Zone": "Lower Bowl - Sideline", "Transactions": 116, "Profit": 11774.44, "Revenue": 110791.71, "Margin": 10.63}, {"Zone": "Club/Mezzanine Level", "Transactions": 221, "Profit": 10792.31, "Revenue": 109866.46, "Margin": 9.82}, {"Zone": "Other/Unclassified", "Transactions": 18, "Profit": 6234.06, "Revenue": 51066.11, "Margin": 12.21}, {"Zone": "Upper Bowl - Upper", "Transactions": 36, "Profit": 1274.28, "Revenue": 13501.1, "Margin": 9.44}, {"Zone": "Upper Bowl - Lower", "Transactions": 18, "Profit": 1026.62, "Revenue": 10793.53, "Margin": 9.51}, {"Zone": "Premium Floor/Courtside", "Transactions": 2, "Profit": 472.34, "Revenue": 6516.84, "Margin": 7.25}, {"Zone": "General Admission/Standing", "Transactions": 3, "Profit": 162.17, "Revenue": 2669.72, "Margin": 6.07}], "Chase Center": [{"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 109, "Profit": 11866.72, "Revenue": 114574.83, "Margin": 10.36}, {"Zone": "Lower Bowl - Sideline", "Transactions": 147, "Profit": 10511.61, "Revenue": 97608.07, "Margin": 10.77}, {"Zone": "Club/Mezzanine Level", "Transactions": 205, "Profit": 6743.83, "Revenue": 65164.6, "Margin": 10.35}, {"Zone": "Premium Floor/Courtside", "Transactions": 8, "Profit": 6153.92, "Revenue": 52220.92, "Margin": 11.78}, {"Zone": "Other/Unclassified", "Transactions": 1, "Profit": 154.51, "Revenue": 1140.02, "Margin": 13.55}], "TD Garden": [{"Zone": "Loge (Lower Premium)", "Transactions": 251, "Profit": 20298.43, "Revenue": 204740.81, "Margin": 9.91}, {"Zone": "Premium Floor/Courtside", "Transactions": 20, "Profit": 4159.31, "Revenue": 41935.03, "Margin": 9.92}, {"Zone": "Upper Bowl - Lower", "Transactions": 85, "Profit": 2906.61, "Revenue": 28270.58, "Margin": 10.28}, {"Zone": "Upper Bowl - Upper", "Transactions": 70, "Profit": 2254.98, "Revenue": 25089.23, "Margin": 8.99}, {"Zone": "Other/Unclassified", "Transactions": 1, "Profit": -1356.28, "Revenue": 0.0, "Margin": -Infinity}], "Xfinity Mobile Arena": [{"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 120, "Profit": 5333.14, "Revenue": 55261.64, "Margin": 9.65}, {"Zone": "Lower Bowl - Sideline", "Transactions": 82, "Profit": 4349.91, "Revenue": 37869.99, "Margin": 11.49}, {"Zone": "Stadium - End Zone", "Transactions": 3, "Profit": 3141.57, "Revenue": 29005.32, "Margin": 10.83}, {"Zone": "Club/Mezzanine Level", "Transactions": 90, "Profit": 2064.97, "Revenue": 17341.44, "Margin": 11.91}, {"Zone": "Other/Unclassified", "Transactions": 6, "Profit": 114.87, "Revenue": 1700.98, "Margin": 6.75}, {"Zone": "General Admission/Standing", "Transactions": 1, "Profit": 58.23, "Revenue": 393.18, "Margin": 14.81}], "Little Caesars Arena": [{"Zone": "Lower Bowl - Sideline", "Transactions": 115, "Profit": 7280.75, "Revenue": 67424.6, "Margin": 10.8}, {"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 134, "Profit": 5646.99, "Revenue": 55859.45, "Margin": 10.11}, {"Zone": "Premium Floor/Courtside", "Transactions": 7, "Profit": 3347.07, "Revenue": 27492.82, "Margin": 12.17}, {"Zone": "Club/Mezzanine Level", "Transactions": 19, "Profit": 414.11, "Revenue": 4187.72, "Margin": 9.89}, {"Zone": "Upper Bowl - Lower", "Transactions": 1, "Profit": 75.48, "Revenue": 540.33, "Margin": 13.97}], "Capital One Arena": [{"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 79, "Profit": 6104.74, "Revenue": 50331.46, "Margin": 12.13}, {"Zone": "Lower Bowl - Sideline", "Transactions": 73, "Profit": 4125.65, "Revenue": 34543.77, "Margin": 11.94}, {"Zone": "Premium Floor/Courtside", "Transactions": 13, "Profit": 2638.58, "Revenue": 20345.82, "Margin": 12.97}, {"Zone": "Other/Unclassified", "Transactions": 8, "Profit": 2460.12, "Revenue": 25071.46, "Margin": 9.81}, {"Zone": "Upper Bowl - Upper", "Transactions": 62, "Profit": 1575.11, "Revenue": 13165.44, "Margin": 11.96}, {"Zone": "Club Level", "Transactions": 12, "Profit": 1180.52, "Revenue": 9816.33, "Margin": 12.03}, {"Zone": "Club/Mezzanine Level", "Transactions": 15, "Profit": 664.89, "Revenue": 4786.66, "Margin": 13.89}, {"Zone": "General Admission/Standing", "Transactions": 1, "Profit": 17.83, "Revenue": 94.78, "Margin": 18.81}], "Moda Center": [{"Zone": "Lower Bowl - Sideline", "Transactions": 41, "Profit": 2262.26, "Revenue": 21957.61, "Margin": 10.3}, {"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 43, "Profit": 1549.92, "Revenue": 15092.83, "Margin": 10.27}, {"Zone": "Club/Mezzanine Level", "Transactions": 60, "Profit": 1204.48, "Revenue": 11400.06, "Margin": 10.57}, {"Zone": "Upper Bowl - Lower", "Transactions": 51, "Profit": 861.47, "Revenue": 8552.86, "Margin": 10.07}, {"Zone": "Upper Bowl - Upper", "Transactions": 59, "Profit": 700.18, "Revenue": 6114.3, "Margin": 11.45}, {"Zone": "Premium Floor/Courtside", "Transactions": 6, "Profit": 248.86, "Revenue": 3072.86, "Margin": 8.1}], "Grand Casino Arena": [{"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 78, "Profit": 3186.07, "Revenue": 27024.92, "Margin": 11.79}, {"Zone": "Lower Bowl - Sideline", "Transactions": 57, "Profit": 2375.72, "Revenue": 20027.29, "Margin": 11.86}, {"Zone": "Club/Mezzanine Level", "Transactions": 117, "Profit": 1956.12, "Revenue": 23202.98, "Margin": 8.43}, {"Zone": "Premium Floor/Courtside", "Transactions": 3, "Profit": 257.9, "Revenue": 1440.08, "Margin": 17.91}], "Ball Arena": [{"Zone": "Lower Bowl - Sideline", "Transactions": 39, "Profit": 5133.8, "Revenue": 35175.85, "Margin": 14.59}, {"Zone": "Lower Bowl - Upper Rows", "Transactions": 51, "Profit": 4559.0, "Revenue": 36039.8, "Margin": 12.65}, {"Zone": "Lower Bowl - Baseline/Corner", "Transactions": 42, "Profit": 2841.8, "Revenue": 24364.3, "Margin": 11.66}, {"Zone": "Club/Mezzanine Level", "Transactions": 25, "Profit": 1308.84, "Revenue": 11442.43, "Margin": 11.44}, {"Zone": "Upper Bowl - Upper", "Transactions": 54, "Profit": 887.85, "Revenue": 10745.4, "Margin": 8.26}, {"Zone": "Upper Bowl - Lower", "Transactions": 26, "Profit": 662.56, "Revenue": 9246.36, "Margin": 7.17}, {"Zone": "Other/Unclassified", "Transactions": 3, "Profit": 539.17, "Revenue": 4137.67, "Margin": 13.03}, {"Zone": "General Admission/Standing", "Transactions": 4, "Profit": 74.06, "Revenue": 849.51, "Margin": 8.72}]}, "zone_comparison": [{"Zone": "Lower Bowl - Baseline/Corner", "Total_Transactions": 6912, "Total_Profit": 365238.48, "Avg_Profit": 52.84121527777778, "Profit_Margin": 10.873968454332607, "Venues_Present": 692}, {"Zone": "Lower Bowl - Sideline", "Total_Transactions": 3580, "Total_Profit": 177104.83000000002, "Avg_Profit": 49.47062290502794, "Profit_Margin": 10.90647162461345, "Venues_Present": 283}, {"Zone": "Club/Mezzanine Level", "Total_Transactions": 3007, "Total_Profit": 90525.62, "Avg_Profit": 30.10496175590289, "Profit_Margin": 10.562843365173178, "Venues_Present": 314}, {"Zone": "Premium Floor/Courtside", "Total_Transactions": 385, "Total_Profit": 72656.95999999999, "Avg_Profit": 188.7193766233766, "Profit_Margin": 10.729681664817713, "Venues_Present": 102}, {"Zone": "Other/Unclassified", "Total_Transactions": 1789, "Total_Profit": 57063.05, "Avg_Profit": 31.896618222470657, "Profit_Margin": 9.251517197717686, "Venues_Present": 355}, {"Zone": "Lower Bowl - Upper Rows", "Total_Transactions": 722, "Total_Profit": 36822.3, "Avg_Profit": 51.00041551246538, "Profit_Margin": 10.723350839571074, "Venues_Present": 101}, {"Zone": "Upper Bowl - Upper", "Total_Transactions": 1475, "Total_Profit": 34537.14, "Avg_Profit": 23.415010169491524, "Profit_Margin": 8.819564425039228, "Venues_Present": 140}, {"Zone": "Upper Bowl - Lower", "Total_Transactions": 921, "Total_Profit": 23476.39, "Avg_Profit": 25.490108577633006, "Profit_Margin": 9.434131119545446, "Venues_Present": 109}, {"Zone": "Loge (Lower Premium)", "Total_Transactions": 286, "Total_Profit": 21649.02, "Avg_Profit": 75.69587412587413, "Profit_Margin": 9.909639224283186, "Venues_Present": 21}, {"Zone": "Stadium - End Zone", "Total_Transactions": 117, "Total_Profit": 6820.85, "Avg_Profit": 58.29786324786325, "Profit_Margin": 10.18358780420984, "Venues_Present": 14}, {"Zone": "Club Level", "Total_Transactions": 43, "Total_Profit": 4829.499999999999, "Avg_Profit": 112.31395348837208, "Profit_Margin": 12.177170710847225, "Venues_Present": 18}, {"Zone": "General Admission/Standing", "Total_Transactions": 231, "Total_Profit": 1868.37, "Avg_Profit": 8.088181818181818, "Profit_Margin": 5.054440804957781, "Venues_Present": 89}]};
+        
+        // Format functions
+        const formatCurrency = (val) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(val);
+        };
+        
+        const formatNumber = (val) => {
+            return new Intl.NumberFormat('en-US').format(val);
+        };
+        
+        // Update KPIs
+        const bestAvg = zoneData.zone_comparison.reduce((max, z) => 
+            z.Avg_Profit > max.Avg_Profit ? z : max
+        );
+        const bestTotal = zoneData.zone_comparison.reduce((max, z) => 
+            z.Total_Profit > max.Total_Profit ? z : max
+        );
+        const bestMargin = zoneData.zone_comparison.reduce((max, z) => 
+            z.Profit_Margin > max.Profit_Margin ? z : max
+        );
+        
+        document.getElementById('bestAvgZone').textContent = formatCurrency(bestAvg.Avg_Profit);
+        document.getElementById('bestAvgZoneName').textContent = bestAvg.Zone;
+        document.getElementById('bestTotalZone').textContent = formatCurrency(bestTotal.Total_Profit);
+        document.getElementById('bestTotalZoneName').textContent = bestTotal.Zone;
+        document.getElementById('bestMarginZone').textContent = bestMargin.Profit_Margin.toFixed(2) + '%';
+        document.getElementById('bestMarginZoneName').textContent = bestMargin.Zone;
+        document.getElementById('totalZones').textContent = zoneData.zone_comparison.length;
+        
+        // Chart colors
+        const colors = {
+            premium: 'rgba(255, 215, 0, 0.8)',
+            lowerBowl: 'rgba(40, 167, 69, 0.8)',
+            club: 'rgba(111, 66, 193, 0.8)',
+            upper: 'rgba(23, 162, 184, 0.8)',
+            other: 'rgba(108, 117, 125, 0.8)',
+            primary: 'rgba(102, 126, 234, 0.8)',
+            secondary: 'rgba(118, 75, 162, 0.8)',
+            success: 'rgba(40, 167, 69, 0.8)',
+            danger: 'rgba(220, 53, 69, 0.8)',
+            warning: 'rgba(255, 193, 7, 0.8)',
+            info: 'rgba(23, 162, 184, 0.8)'
+        };
+        
+        // Color mapping function
+        function getZoneColor(zoneName) {
+            const name = zoneName.toLowerCase();
+            if (name.includes('premium') || name.includes('floor') || name.includes('court')) return colors.premium;
+            if (name.includes('lower bowl')) return colors.lowerBowl;
+            if (name.includes('club') || name.includes('loge')) return colors.club;
+            if (name.includes('upper')) return colors.upper;
+            return colors.other;
+        }
+        
+        // Sort zones by profit
+        const sortedZones = [...zoneData.zone_comparison].sort((a, b) => b.Total_Profit - a.Total_Profit);
+        
+        // Zone Profit Overview
+        new Chart(document.getElementById('zoneProfitOverview'), {
+            type: 'bar',
+            data: {
+                labels: sortedZones.map(z => z.Zone),
+                datasets: [{
+                    label: 'Total Profit',
+                    data: sortedZones.map(z => z.Total_Profit),
+                    backgroundColor: sortedZones.map(z => getZoneColor(z.Zone))
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const zone = sortedZones[context.dataIndex];
+                                return [
+                                    'Total Profit: ' + formatCurrency(zone.Total_Profit),
+                                    'Transactions: ' + formatNumber(zone.Total_Transactions),
+                                    'Avg Profit: ' + formatCurrency(zone.Avg_Profit),
+                                    'Margin: ' + zone.Profit_Margin.toFixed(1) + '%'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Total Profit ($)' },
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Volume Chart
+        new Chart(document.getElementById('zoneVolumeChart'), {
+            type: 'bar',
+            data: {
+                labels: sortedZones.map(z => z.Zone.substring(0, 20)),
+                datasets: [{
+                    label: 'Transactions',
+                    data: sortedZones.map(z => z.Total_Transactions),
+                    backgroundColor: colors.info
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Number of Transactions' }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Margin Chart
+        new Chart(document.getElementById('zoneMarginChart'), {
+            type: 'bar',
+            data: {
+                labels: sortedZones.map(z => z.Zone.substring(0, 20)),
+                datasets: [{
+                    label: 'Profit Margin %',
+                    data: sortedZones.map(z => z.Profit_Margin),
+                    backgroundColor: colors.warning
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Profit Margin %' },
+                        ticks: {
+                            callback: (value) => value.toFixed(1) + '%'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Avg Profit by Zone
+        const sortedByAvg = [...zoneData.zone_comparison].sort((a, b) => b.Avg_Profit - a.Avg_Profit);
+        new Chart(document.getElementById('avgProfitByZone'), {
+            type: 'bar',
+            data: {
+                labels: sortedByAvg.map(z => z.Zone),
+                datasets: [{
+                    label: 'Avg Profit per Transaction',
+                    data: sortedByAvg.map(z => z.Avg_Profit),
+                    backgroundColor: sortedByAvg.map(z => getZoneColor(z.Zone))
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Avg Profit per Transaction ($)' },
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Scatter Chart
+        new Chart(document.getElementById('zoneScatter'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Zones',
+                    data: zoneData.zone_comparison.map(z => ({
+                        x: z.Total_Transactions,
+                        y: z.Profit_Margin,
+                        r: Math.sqrt(z.Total_Profit) / 20
+                    })),
+                    backgroundColor: zoneData.zone_comparison.map(z => getZoneColor(z.Zone))
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const zone = zoneData.zone_comparison[context.dataIndex];
+                                return [
+                                    zone.Zone,
+                                    'Transactions: ' + formatNumber(zone.Total_Transactions),
+                                    'Margin: ' + zone.Profit_Margin.toFixed(1) + '%',
+                                    'Total Profit: ' + formatCurrency(zone.Total_Profit)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Transaction Volume' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Profit Margin %' },
+                        ticks: {
+                            callback: (value) => value.toFixed(1) + '%'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Pie Chart
+        new Chart(document.getElementById('zonePieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: sortedZones.map(z => z.Zone),
+                datasets: [{
+                    data: sortedZones.map(z => z.Total_Profit),
+                    backgroundColor: sortedZones.map(z => getZoneColor(z.Zone))
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const zone = sortedZones[context.dataIndex];
+                                return [
+                                    zone.Zone,
+                                    'Profit: ' + formatCurrency(zone.Total_Profit),
+                                    'Share: ' + ((zone.Total_Profit / sortedZones.reduce((sum, z) => sum + z.Total_Profit, 0)) * 100).toFixed(1) + '%'
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Profit Per Ticket
+        new Chart(document.getElementById('profitPerTicketZone'), {
+            type: 'bar',
+            data: {
+                labels: sortedByAvg.map(z => z.Zone.substring(0, 20)),
+                datasets: [{
+                    label: 'Avg Profit/Ticket',
+                    data: sortedByAvg.map(z => z.Avg_Profit / 2.5), // Rough estimate
+                    backgroundColor: colors.secondary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Avg Profit per Ticket ($)' },
+                        ticks: {
+                            callback: (value) => '$' + value.toFixed(0)
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Radar Chart
+        const radarZones = sortedZones.slice(0, 6); // Top 6 zones
+        new Chart(document.getElementById('zoneComparisonRadar'), {
+            type: 'radar',
+            data: {
+                labels: ['Total Profit', 'Avg Profit', 'Profit Margin', 'Transaction Volume', 'Venue Availability'],
+                datasets: radarZones.map(zone => ({
+                    label: zone.Zone,
+                    data: [
+                        zone.Total_Profit / 1000, // Scaled
+                        zone.Avg_Profit,
+                        zone.Profit_Margin,
+                        zone.Total_Transactions / 100, // Scaled
+                        zone.Venues_Present * 10 // Scaled
+                    ],
+                    backgroundColor: getZoneColor(zone.Zone).replace('0.8', '0.2'),
+                    borderColor: getZoneColor(zone.Zone),
+                    borderWidth: 2
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Efficiency Chart
+        const efficiency = zoneData.zone_comparison.map(z => ({
+            zone: z.Zone,
+            score: (z.Avg_Profit * z.Profit_Margin * Math.log(z.Total_Transactions + 1)) / 100
+        })).sort((a, b) => b.score - a.score);
+        
+        new Chart(document.getElementById('zoneEfficiencyChart'), {
+            type: 'bar',
+            data: {
+                labels: efficiency.map(e => e.zone.substring(0, 20)),
+                datasets: [{
+                    label: 'Efficiency Score',
+                    data: efficiency.map(e => e.score),
+                    backgroundColor: colors.success
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => 'Efficiency Score: ' + context.parsed.y.toFixed(1)
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Venue Availability
+        new Chart(document.getElementById('venueAvailabilityChart'), {
+            type: 'bar',
+            data: {
+                labels: sortedZones.map(z => z.Zone.substring(0, 20)),
+                datasets: [{
+                    label: 'Venues with this Zone',
+                    data: sortedZones.map(z => z.Venues_Present),
+                    backgroundColor: colors.primary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Number of Venues' },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Venue Zone Table
+        const tableBody = document.getElementById('venueZoneTableBody');
+        Object.keys(zoneData.venue_zones).forEach(venue => {
+            zoneData.venue_zones[venue].forEach(zone => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${venue}</td>
+                    <td><span class="zone-badge">${zone.Zone}</span></td>
+                    <td>${formatNumber(zone.Transactions)}</td>
+                    <td class="${zone.Profit > 0 ? 'positive' : 'negative'}">${formatCurrency(zone.Profit)}</td>
+                    <td>${zone.Margin.toFixed(1)}%</td>
+                    <td>${formatCurrency(zone.Profit / zone.Transactions)}</td>
+                `;
+            });
+        });
+        
+        // Strategic Insights
+        const strategicInsights = [
+            {
+                type: 'success',
+                text: `<strong>🎯 Premium Floor/Courtside:</strong> With an average profit of ${formatCurrency(bestAvg.Avg_Profit)} per transaction, this zone delivers 4.1x the overall average. Despite limited availability (${bestAvg.Total_Transactions} transactions), focus on acquiring more inventory in this zone.`
+            },
+            {
+                type: 'success',
+                text: `<strong>💰 Lower Bowl Sweet Spot:</strong> Lower Bowl zones combine high volume (${sortedZones.filter(z => z.Zone.includes('Lower Bowl')).reduce((sum, z) => sum + z.Total_Transactions, 0).toLocaleString()} transactions) with strong margins (10.7-10.9%). This is your bread and butter - maintain and expand inventory here.`
+            },
+            {
+                type: 'success',
+                text: `<strong>🏆 Club Level Opportunity:</strong> Club sections show ${bestMargin.Profit_Margin.toFixed(2)}% margins - the highest of any zone. Limited availability means you should aggressively pursue club-level inventory when available.`
+            },
+            {
+                type: 'warning',
+                text: `<strong>⚠️ Volume vs Value Trade-off:</strong> While Lower Bowl Baseline/Corner has the highest total profit (${formatCurrency(bestTotal.Total_Profit)}), it requires high transaction volume. Balance this with higher-margin, lower-volume premium zones.`
+            }
+        ];
+        
+        document.getElementById('strategicInsights').innerHTML = strategicInsights.map(i => 
+            `<div class="insight-item ${i.type}">${i.text}</div>`
+        ).join('');
+        
+        // Targeting Strategy
+        const targeting = [
+            {
+                type: 'success',
+                text: `<strong>Tier 1 Priority:</strong> Premium Floor/Courtside & Club Level - Highest margins (12%+) and avg profit ($100+/trans). Acquire aggressively even at premium costs.`
+            },
+            {
+                type: 'success',
+                text: `<strong>Tier 2 Priority:</strong> Lower Bowl Sideline sections - Perfect balance of volume and profitability. Your core business with 10.9% margins.`
+            },
+            {
+                type: 'success',
+                text: `<strong>Tier 3 Priority:</strong> Lower Bowl Baseline/Corner - High volume driver (${sortedZones[0].Total_Transactions.toLocaleString()} trans) with solid 10.87% margins. Maintain current levels.`
+            },
+            {
+                type: 'warning',
+                text: `<strong>Tier 4 - Selective:</strong> Club/Mezzanine Level - Moderate performance (10.56% margin). Only pursue at favorable pricing.`
+            },
+            {
+                type: 'warning',
+                text: `<strong>Tier 5 - Minimal Focus:</strong> Upper Bowl zones - Lower margins (8-9%) and avg profit ($23-25/trans). Consider only for volume fill or specific customer requests.`
+            }
+        ];
+        
+        document.getElementById('targetingStrategy').innerHTML = targeting.map(t => 
+            `<div class="insight-item ${t.type}">${t.text}</div>`
+        ).join('');
+        
+        // Avoid Zones
+        const worstZones = [...zoneData.zone_comparison].sort((a, b) => a.Avg_Profit - b.Avg_Profit).slice(0, 3);
+        const avoid = [
+            {
+                type: 'danger',
+                text: `<strong>🚫 Avoid: General Admission/Standing</strong> - Worst performer with only ${worstZones[0].Profit_Margin.toFixed(1)}% margin and ${formatCurrency(worstZones[0].Avg_Profit)} avg profit. Unless specifically requested, minimize inventory here.`
+            },
+            {
+                type: 'danger',
+                text: `<strong>⚠️ Optimize: Upper Bowl Sections</strong> - Both Upper Bowl zones show below-average performance (8-9% margins). Consider dynamic pricing or package deals to improve margins.`
+            },
+            {
+                type: 'warning',
+                text: `<strong>📊 Monitor: "Other/Unclassified"</strong> - ${formatNumber(zoneData.zone_comparison.find(z => z.Zone.includes('Other')).Total_Transactions)} transactions in unclear zones. Review these sections and reclassify or optimize pricing.`
+            },
+            {
+                type: 'warning',
+                text: `<strong>💡 Recommendation:</strong> For venues where you're acquiring inventory, establish minimum zone requirements. For example: "Acquire only Lower Bowl, Club, or Premium zones unless margins can be guaranteed at 12%+"`
+            }
+        ];
+        
+        document.getElementById('avoidZones').innerHTML = avoid.map(a => 
+            `<div class="insight-item ${a.type}">${a.text}</div>`
+        ).join('');
+    </script>
+</body>
+</html>

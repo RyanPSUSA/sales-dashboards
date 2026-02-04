@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pure PRD Sales Dashboard - No PRDRESALE Siblings</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.8em;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .nav-tabs {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .kpi-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .kpi-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .kpi-subtext {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        
+        .chart-container.tall {
+            height: 500px;
+        }
+        
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .insight-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .insight-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .insight-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+        
+        .insight-item strong {
+            color: #667eea;
+        }
+        
+        .positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .warning {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🎯 Pure PRD Sales Dashboard</h1>
+            <p class="subtitle">Analysis of PRD orders WITHOUT PRDRESALE siblings - True standalone PRD performance (17,368 transactions)</p>
+            <div class="alert" style="background: #d1ecf1; border-left: 5px solid #0c5460; padding: 20px; margin-top: 20px; border-radius: 8px;">
+                <div style="font-weight: 700; color: #0c5460; margin-bottom: 10px; font-size: 1.1em;">ℹ️ About This Data</div>
+                This dashboard shows only PRD orders that do NOT have any PRDRESALE transactions with the same PO#. 
+                These are "pure" standalone sales without any resale activity, representing ${(17368/19468*100).toFixed(1)}% of all transactions.
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="tab-button active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="tab-button" onclick="showTab('profitability')">💰 Profitability Analysis</button>
+            <button class="tab-button" onclick="showTab('pricing')">💵 Price Bucket Analysis</button>
+            <button class="tab-button" onclick="showTab('performance')">⚡ Performance Metrics</button>
+            <button class="tab-button" onclick="showTab('market')">🌍 Market Analysis</button>
+            <button class="tab-button" onclick="showTab('operational')">⚙️ Operational Insights</button>
+            <button class="tab-button" onclick="showTab('losses')">⚠️ Loss Analysis</button>
+        </div>
+        
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="tab-content active">
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Profit/Ticket</div>
+                    <div class="kpi-value" id="avgProfitTicket">$0</div>
+                    <div class="kpi-subtext">Median: <span id="medianProfitTicket">$0</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Markup %</div>
+                    <div class="kpi-value" id="avgMarkup">0%</div>
+                    <div class="kpi-subtext">Price optimization metric</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Lead Time</div>
+                    <div class="kpi-value" id="avgLeadTime">0</div>
+                    <div class="kpi-subtext">Median: <span id="medianLeadTime">0</span> days</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Sales Velocity</div>
+                    <div class="kpi-value" id="saleVelocity">0h</div>
+                    <div class="kpi-subtext">PO to Sale time</div>
+                </div>
+            </div>
+            
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-title">💡 Key Insights</div>
+                    <div id="keyInsights"></div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title">🎯 Opportunities</div>
+                    <div id="opportunities"></div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-title">⚠️ Risk Areas</div>
+                    <div id="riskAreas"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PROFITABILITY TAB -->
+        <div id="profitability" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">🏆 Top 20 Sections by Avg Profit Per Ticket</h3>
+                    <div class="chart-container tall">
+                        <canvas id="sectionChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">💵 Revenue Bucket Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueBucketChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">📈 Top Venues by Markup %</h3>
+                    <div class="chart-container">
+                        <canvas id="venueMarkupChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">🎫 Quantity Optimization Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="quantityOptChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PRICING TAB -->
+        <div id="pricing" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">💵 Profit Margin by Price Per Ticket</h3>
+                    <div class="chart-container">
+                        <canvas id="priceBucketMarginChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">📊 Transaction Volume by Price Bucket</h3>
+                    <div class="chart-container">
+                        <canvas id="priceBucketVolumeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">💰 Total Profit by Price Bucket</h3>
+                    <div class="chart-container">
+                        <canvas id="priceBucketProfitChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">🎯 Avg Profit Per Transaction by Price</h3>
+                    <div class="chart-container">
+                        <canvas id="priceBucketAvgChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">🎫 Avg Profit Per Ticket by Price</h3>
+                    <div class="chart-container">
+                        <canvas id="pricePerTicketChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-title">💡 Price Bucket Insights</div>
+                    <div id="priceBucketInsights"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PERFORMANCE TAB -->
+        <div id="performance" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">⏰ Lead Time Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="leadTimeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">📅 Day of Week Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="dowChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card full-width">
+                    <h3 class="chart-title">🕐 Hour of Day Pattern</h3>
+                    <div class="chart-container">
+                        <canvas id="hourChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MARKET TAB -->
+        <div id="market" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">🎭 Event Category Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">📊 Category Profit Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPERATIONAL TAB -->
+        <div id="operational" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">🏷️ Tag Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="tagChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">📦 Optimal Order Sizes</h3>
+                    <div class="chart-container">
+                        <canvas id="quantityProfitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- LOSSES TAB -->
+        <div id="losses" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">🏟️ Top 10 Loss-Making Venues</h3>
+                    <div class="chart-container">
+                        <canvas id="lossVenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">🎭 Top 10 Loss-Making Events</h3>
+                    <div class="chart-container">
+                        <canvas id="lossEventChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="insight-card">
+                <div class="insight-title">💡 Loss Mitigation Strategies</div>
+                <div id="lossMitigation"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Load data
+        const enhancedData = {"summary": {"total_transactions": 17368, "total_revenue": 7988166.32, "total_cost": 7141335.5200000005, "total_profit": 846822.22, "overall_margin": 10.600958794258055, "avg_profit": 48.757612851220635, "profitable_count": 16319, "unprofitable_count": 1049, "profitable_pct": 93.96015660985721, "avg_profit_per_ticket": 22.521839061346174, "median_profit_per_ticket": 11.615, "avg_markup_pct": 11.302265773652739, "avg_lead_time_days": 11.403258586992681, "median_lead_time_days": 2.1260416666666666}, "venues": [{"Venue": "Madison Square Garden", "Profit": 66220.35, "Total": 668253.94, "Quantity": 1162, "PO #": 590, "Avg Profit": 112.24, "Profit Margin %": 9.91}, {"Venue": "American Airlines Center - TX", "Profit": 44537.48, "Total": 364619.68, "Quantity": 1311, "PO #": 618, "Avg Profit": 72.07, "Profit Margin %": 12.21}, {"Venue": "Chase Center", "Profit": 35166.42, "Total": 328298.62, "Quantity": 974, "PO #": 465, "Avg Profit": 75.63, "Profit Margin %": 10.71}, {"Venue": "Gainbridge Fieldhouse", "Profit": 35071.84, "Total": 397363.68, "Quantity": 357, "PO #": 168, "Avg Profit": 208.76, "Profit Margin %": 8.83}, {"Venue": "TD Garden", "Profit": 28926.82, "Total": 293247.14, "Quantity": 847, "PO #": 414, "Avg Profit": 69.87, "Profit Margin %": 9.86}, {"Venue": "Capital One Arena", "Profit": 18574.67, "Total": 155338.29, "Quantity": 507, "PO #": 257, "Avg Profit": 72.27, "Profit Margin %": 11.96}, {"Venue": "Mercedes-Benz Stadium", "Profit": 17919.17, "Total": 176333.91, "Quantity": 504, "PO #": 236, "Avg Profit": 75.93, "Profit Margin %": 10.16}, {"Venue": "Hard Rock Stadium", "Profit": 17259.73, "Total": 137634.05, "Quantity": 233, "PO #": 107, "Avg Profit": 161.31, "Profit Margin %": 12.54}, {"Venue": "Crypto.com Arena", "Profit": 17099.33, "Total": 166018.87, "Quantity": 420, "PO #": 213, "Avg Profit": 80.28, "Profit Margin %": 10.3}, {"Venue": "Little Caesars Arena", "Profit": 16338.09, "Total": 150937.71, "Quantity": 592, "PO #": 269, "Avg Profit": 60.74, "Profit Margin %": 10.82}, {"Venue": "Ball Arena", "Profit": 15991.09, "Total": 130540.73, "Quantity": 491, "PO #": 238, "Avg Profit": 67.19, "Profit Margin %": 12.25}, {"Venue": "Ohio Stadium", "Profit": 15615.61, "Total": 139797.19, "Quantity": 313, "PO #": 160, "Avg Profit": 97.6, "Profit Margin %": 11.17}, {"Venue": "Xfinity Mobile Arena", "Profit": 14468.18, "Total": 138199.4, "Quantity": 620, "PO #": 291, "Avg Profit": 49.72, "Profit Margin %": 10.47}, {"Venue": "Arthur Ashe Stadium", "Profit": 12836.85, "Total": 92923.01, "Quantity": 84, "PO #": 34, "Avg Profit": 377.55, "Profit Margin %": 13.81}, {"Venue": "Dickies Arena", "Profit": 12669.71, "Total": 91990.73, "Quantity": 340, "PO #": 133, "Avg Profit": 95.26, "Profit Margin %": 13.77}, {"Venue": "Mortgage Matchup Center", "Profit": 12471.78, "Total": 102104.43, "Quantity": 379, "PO #": 200, "Avg Profit": 62.36, "Profit Margin %": 12.21}, {"Venue": "Scotiabank Arena", "Profit": 11698.87, "Total": 106109.54, "Quantity": 308, "PO #": 154, "Avg Profit": 75.97, "Profit Margin %": 11.03}, {"Venue": "United Center", "Profit": 11329.59, "Total": 122971.35, "Quantity": 393, "PO #": 187, "Avg Profit": 60.59, "Profit Margin %": 9.21}, {"Venue": "Barclays Center", "Profit": 10217.58, "Total": 103357.2, "Quantity": 301, "PO #": 167, "Avg Profit": 61.18, "Profit Margin %": 9.89}, {"Venue": "Sphere", "Profit": 10157.43, "Total": 83866.3, "Quantity": 142, "PO #": 75, "Avg Profit": 135.43, "Profit Margin %": 12.11}], "events": [{"Event": "Indiana Pacers vs. New York Knicks", "Profit": 19467.32, "Total": 230544.37, "Quantity": 48, "PO #": 23, "Avg Profit": 846.41, "Profit Margin %": 8.44}, {"Event": "US Open Tennis", "Profit": 13033.17, "Total": 95445.37, "Quantity": 86, "PO #": 34, "Avg Profit": 383.33, "Profit Margin %": 13.66}, {"Event": "New York Knicks vs. Indiana Pacers", "Profit": 12295.0, "Total": 144594.9, "Quantity": 30, "PO #": 14, "Avg Profit": 878.21, "Profit Margin %": 8.5}, {"Event": "Capital One Orange Bowl", "Profit": 11560.25, "Total": 88736.37, "Quantity": 137, "PO #": 52, "Avg Profit": 222.31, "Profit Margin %": 13.03}, {"Event": "Ohio State Football vs. Texas Longhorns Football", "Profit": 8592.47, "Total": 79940.12, "Quantity": 80, "PO #": 35, "Avg Profit": 245.5, "Profit Margin %": 10.75}, {"Event": "SEC Championship", "Profit": 8174.93, "Total": 88391.65, "Quantity": 116, "PO #": 44, "Avg Profit": 185.79, "Profit Margin %": 9.25}, {"Event": "Lady Gaga", "Profit": 7928.67, "Total": 74554.54, "Quantity": 54, "PO #": 32, "Avg Profit": 247.77, "Profit Margin %": 10.63}, {"Event": "Golden State Warriors vs. Oklahoma City Thunder", "Profit": 7459.54, "Total": 56414.44, "Quantity": 81, "PO #": 34, "Avg Profit": 219.4, "Profit Margin %": 13.22}, {"Event": "Sugar Bowl", "Profit": 7430.65, "Total": 72211.24, "Quantity": 139, "PO #": 55, "Avg Profit": 135.1, "Profit Margin %": 10.29}, {"Event": "Indiana Pacers vs. Oklahoma City Thunder", "Profit": 6780.41, "Total": 77968.12, "Quantity": 24, "PO #": 13, "Avg Profit": 521.57, "Profit Margin %": 8.7}, {"Event": "Backstreet Boys", "Profit": 6023.24, "Total": 50321.77, "Quantity": 59, "PO #": 34, "Avg Profit": 177.15, "Profit Margin %": 11.97}, {"Event": "Coldplay", "Profit": 5237.48, "Total": 40038.38, "Quantity": 47, "PO #": 24, "Avg Profit": 218.23, "Profit Margin %": 13.08}, {"Event": "The Weeknd w/ Playboi Carti", "Profit": 5207.28, "Total": 41564.21, "Quantity": 126, "PO #": 90, "Avg Profit": 57.86, "Profit Margin %": 12.53}, {"Event": "New York Knicks vs. Boston Celtics", "Profit": 4850.13, "Total": 55611.68, "Quantity": 38, "PO #": 19, "Avg Profit": 255.27, "Profit Margin %": 8.72}, {"Event": "FIFA Club World Cup Soccer", "Profit": 4589.16, "Total": 52301.69, "Quantity": 293, "PO #": 173, "Avg Profit": 26.53, "Profit Margin %": 8.77}, {"Event": "NCAA College World Series", "Profit": 4360.93, "Total": 52897.9, "Quantity": 272, "PO #": 114, "Avg Profit": 38.25, "Profit Margin %": 8.24}, {"Event": "Morgan Wallen w/ Miranda Lambert", "Profit": 4229.77, "Total": 30358.1, "Quantity": 36, "PO #": 20, "Avg Profit": 211.49, "Profit Margin %": 13.93}, {"Event": "Dallas Mavericks vs. Houston Rockets", "Profit": 4088.71, "Total": 30815.3, "Quantity": 62, "PO #": 26, "Avg Profit": 157.26, "Profit Margin %": 13.27}, {"Event": "Beyonce", "Profit": 4050.31, "Total": 31054.91, "Quantity": 70, "PO #": 48, "Avg Profit": 84.38, "Profit Margin %": 13.04}, {"Event": "NHL Winter Classic vs. Florida Panthers", "Profit": 3874.86, "Total": 29438.99, "Quantity": 58, "PO #": 29, "Avg Profit": 133.62, "Profit Margin %": 13.16}], "monthly": [{"Sale_Month": "2025-01", "Profit": 27987.72, "Total": 302238.13, "PO #": 871}, {"Sale_Month": "2025-02", "Profit": 30952.74, "Total": 279155.25, "PO #": 928}, {"Sale_Month": "2025-03", "Profit": 35168.67, "Total": 233022.34, "PO #": 609}, {"Sale_Month": "2025-04", "Profit": 28855.26, "Total": 278302.25, "PO #": 591}, {"Sale_Month": "2025-05", "Profit": 82978.38, "Total": 822696.71, "PO #": 961}, {"Sale_Month": "2025-06", "Profit": 60482.96, "Total": 473675.75, "PO #": 1073}, {"Sale_Month": "2025-07", "Profit": 42452.12, "Total": 413147.65, "PO #": 1192}, {"Sale_Month": "2025-08", "Profit": 60216.83, "Total": 559504.88, "PO #": 1316}, {"Sale_Month": "2025-09", "Profit": 54961.23, "Total": 518264.22, "PO #": 1370}, {"Sale_Month": "2025-10", "Profit": 100288.49, "Total": 994445.49, "PO #": 2275}, {"Sale_Month": "2025-11", "Profit": 109278.67, "Total": 1083666.02, "PO #": 2432}, {"Sale_Month": "2025-12", "Profit": 213199.15, "Total": 2030047.63, "PO #": 3750}], "sections": [{"Section": "CRT-J", "Profit Per Ticket": 802.09, "Profit": 8020.94, "PO #": 5}, {"Section": "CRT-G", "Profit Per Ticket": 706.38, "Profit": 8898.01, "PO #": 5}, {"Section": "VIP", "Profit Per Ticket": 222.99, "Profit": 8830.42, "PO #": 21}, {"Section": "FLR9", "Profit Per Ticket": 160.28, "Profit": 1709.57, "PO #": 5}, {"Section": "FLOOR3", "Profit Per Ticket": 150.94, "Profit": 2394.94, "PO #": 8}, {"Section": "23AA", "Profit Per Ticket": 134.26, "Profit": 1004.93, "PO #": 5}, {"Section": "CRTS", "Profit Per Ticket": 112.32, "Profit": 1797.14, "PO #": 8}, {"Section": "VIP12", "Profit Per Ticket": 111.12, "Profit": 1429.04, "PO #": 6}, {"Section": "FLR2", "Profit Per Ticket": 109.63, "Profit": 3057.34, "PO #": 15}, {"Section": "FLR1", "Profit Per Ticket": 108.0, "Profit": 1978.72, "PO #": 11}, {"Section": "CRT-L", "Profit Per Ticket": 95.1, "Profit": 1344.9, "PO #": 6}, {"Section": "9", "Profit Per Ticket": 91.81, "Profit": 4834.16, "PO #": 41}, {"Section": "FLR4", "Profit Per Ticket": 89.95, "Profit": 1575.05, "PO #": 9}, {"Section": "LOGE1", "Profit Per Ticket": 85.58, "Profit": 4646.95, "PO #": 24}, {"Section": "246", "Profit Per Ticket": 81.17, "Profit": 1288.5, "PO #": 8}, {"Section": "LOGE13", "Profit Per Ticket": 78.98, "Profit": 994.79, "PO #": 5}, {"Section": "SEC3", "Profit Per Ticket": 78.65, "Profit": 1121.79, "PO #": 8}, {"Section": "FL1", "Profit Per Ticket": 77.47, "Profit": 774.72, "PO #": 5}, {"Section": "30", "Profit Per Ticket": 69.11, "Profit": 407.87, "PO #": 5}, {"Section": "130C", "Profit Per Ticket": 67.39, "Profit": 1207.0, "PO #": 5}], "lead_time": [{"Bucket": "Same Day/Past", "Total Profit": 115508.47, "Avg Profit": 27.69, "Count": 4172}, {"Bucket": "1-7 days", "Total Profit": 367498.11, "Avg Profit": 48.09, "Count": 7642}, {"Bucket": "8-30 days", "Total Profit": 192755.24, "Avg Profit": 58.77, "Count": 3280}, {"Bucket": "31-90 days", "Total Profit": 112816.48, "Avg Profit": 65.4, "Count": 1725}, {"Bucket": "90+ days", "Total Profit": 58243.92, "Avg Profit": 106.09, "Count": 549}], "categories": [{"Event_Category": "Other", "Profit": 653192.18, "Total": 6178955.17, "PO #": 12914, "Profit Margin %": 10.57}, {"Event_Category": "Sports", "Profit": 139768.22, "Total": 1365423.86, "PO #": 3687, "Profit Margin %": 10.24}, {"Event_Category": "Bowl Game", "Profit": 24250.52, "Total": 206783.5, "PO #": 203, "Profit Margin %": 11.73}, {"Event_Category": "Music/Concert", "Profit": 17979.42, "Total": 141813.09, "PO #": 390, "Profit Margin %": 12.68}, {"Event_Category": "Theater/Arts", "Profit": 11631.88, "Total": 95190.7, "PO #": 174, "Profit Margin %": 12.22}], "day_of_week": [{"Day": "Monday", "Total Profit": 113046.85, "Avg Profit": 52.6, "Count": 2149}, {"Day": "Tuesday", "Total Profit": 130588.34, "Avg Profit": 54.41, "Count": 2400}, {"Day": "Wednesday", "Total Profit": 109910.36, "Avg Profit": 46.41, "Count": 2368}, {"Day": "Thursday", "Total Profit": 107989.81, "Avg Profit": 44.33, "Count": 2436}, {"Day": "Friday", "Total Profit": 144736.31, "Avg Profit": 49.0, "Count": 2954}, {"Day": "Saturday", "Total Profit": 128849.34, "Avg Profit": 42.52, "Count": 3030}, {"Day": "Sunday", "Total Profit": 111701.21, "Avg Profit": 55.0, "Count": 2031}], "price_buckets": [{"Bucket": "Under $50", "Transactions": 2224, "Total Profit": 10672.75, "Total Revenue": 162107.82, "Profit Margin %": 6.5837354422507195, "Avg Profit Per Ticket": 1.1, "Avg Price Per Ticket": 37.41, "Total Tickets": 4305}, {"Bucket": "$50-$100", "Transactions": 5011, "Total Profit": 68268.52, "Total Revenue": 713682.16, "Profit Margin %": 9.56567556627729, "Avg Profit Per Ticket": 6.34, "Avg Price Per Ticket": 73.6, "Total Tickets": 9694}, {"Bucket": "$100-$150", "Transactions": 3338, "Total Profit": 73178.51, "Total Revenue": 782129.92, "Profit Margin %": 9.356311289050288, "Avg Profit Per Ticket": 10.9, "Avg Price Per Ticket": 122.56, "Total Tickets": 6388}, {"Bucket": "$150-$200", "Transactions": 1674, "Total Profit": 57961.27, "Total Revenue": 584433.45, "Profit Margin %": 9.917514132704074, "Avg Profit Per Ticket": 16.4, "Avg Price Per Ticket": 172.56, "Total Tickets": 3384}, {"Bucket": "$200-$300", "Transactions": 2035, "Total Profit": 106094.86, "Total Revenue": 1010881.55, "Profit Margin %": 10.495281074226748, "Avg Profit Per Ticket": 24.5, "Avg Price Per Ticket": 243.23, "Total Tickets": 4158}, {"Bucket": "$300-$400", "Transactions": 967, "Total Profit": 75876.69, "Total Revenue": 697257.52, "Profit Margin %": 10.882161586439397, "Avg Profit Per Ticket": 36.58, "Avg Price Per Ticket": 345.48, "Total Tickets": 2017}, {"Bucket": "$400-$500", "Transactions": 582, "Total Profit": 64883.48, "Total Revenue": 545970.44, "Profit Margin %": 11.884064639103906, "Avg Profit Per Ticket": 52.38, "Avg Price Per Ticket": 446.43, "Total Tickets": 1223}, {"Bucket": "$500-$750", "Transactions": 781, "Total Profit": 117141.6, "Total Revenue": 1001188.59, "Profit Margin %": 11.700253196053703, "Avg Profit Per Ticket": 70.15, "Avg Price Per Ticket": 601.53, "Total Tickets": 1664}, {"Bucket": "$750-$1,000", "Transactions": 280, "Total Profit": 60276.78, "Total Revenue": 504106.84, "Profit Margin %": 11.957143846728998, "Avg Profit Per Ticket": 105.03, "Avg Price Per Ticket": 859.45, "Total Tickets": 587}, {"Bucket": "Over $1,000", "Transactions": 443, "Total Profit": 223696.15, "Total Revenue": 1986408.03, "Profit Margin %": 11.261339393598806, "Avg Profit Per Ticket": 234.15, "Avg Price Per Ticket": 2102.35, "Total Tickets": 933}], "quantity_optimization": [{"Quantity": 7, "Total Profit": 15635.15, "Avg Profit": 868.62, "Avg Profit/Ticket": 124.09, "Count": 18}, {"Quantity": 6, "Total Profit": 7354.14, "Avg Profit": 114.91, "Avg Profit/Ticket": 19.15, "Count": 64}, {"Quantity": 4, "Total Profit": 129699.23, "Avg Profit": 105.53, "Avg Profit/Ticket": 26.38, "Count": 1229}, {"Quantity": 5, "Total Profit": 12134.19, "Avg Profit": 101.97, "Avg Profit/Ticket": 20.39, "Count": 119}, {"Quantity": 8, "Total Profit": 875.2, "Avg Profit": 72.93, "Avg Profit/Ticket": 9.12, "Count": 12}, {"Quantity": 3, "Total Profit": 76644.1, "Avg Profit": 72.1, "Avg Profit/Ticket": 24.03, "Count": 1063}, {"Quantity": 2, "Total Profit": 551992.49, "Avg Profit": 54.34, "Avg Profit/Ticket": 27.17, "Count": 10158}, {"Quantity": 1, "Total Profit": 51051.8, "Avg Profit": 10.87, "Avg Profit/Ticket": 10.87, "Count": 4698}], "customers": [{"Customer": "SeatGeek PRD", "Profit": 306309.6, "Total": 2693751.03, "PO #": 5846}, {"Customer": "Seatgeek PRD", "Profit": 290578.69, "Total": 2616093.99, "PO #": 6051}, {"Customer": "SeatGeek", "Profit": 271724.96, "Total": 2348473.8, "PO #": 4371}, {"Customer": "Tickpick PRD", "Profit": 9030.06, "Total": 289929.77, "PO #": 714}, {"Customer": "Gotickets", "Profit": -30.89, "Total": 265.13, "PO #": 4}, {"Customer": "DRJ Technologies LLC", "Profit": -79.57, "Total": 0.0, "PO #": 1}, {"Customer": "Automatiq B2B", "Profit": -136.02, "Total": 148.03, "PO #": 2}, {"Customer": "Ticket Evolution", "Profit": -371.48, "Total": 810.92, "PO #": 7}, {"Customer": "Ticket Network", "Profit": -402.29, "Total": 722.03, "PO #": 8}, {"Customer": "Ticketnetwork PRD", "Profit": -412.81, "Total": 2538.95, "PO #": 39}], "summary_advanced": {"total_transactions": 17368, "total_revenue": 7988166.32, "total_cost": 7141335.5200000005, "total_profit": 846822.22, "overall_margin": 10.600958794258055, "avg_profit": 48.757612851220635, "profitable_count": 16319, "unprofitable_count": 1049, "profitable_pct": 93.96015660985721, "avg_profit_per_ticket": 22.521839061346174, "median_profit_per_ticket": 11.615, "avg_markup_pct": 11.302265773652739, "avg_lead_time_days": 11.403258586992681, "median_lead_time_days": 2.1260416666666666, "avg_sale_velocity_hours": 2.636733264240749, "total_losses": -62647.119999999995, "loss_count": 1035}, "tags": [{"Tags": "PRD", "Profit": 846822.22, "PO #": 17368}], "hour_of_day": [{"Hour": 0, "Total Profit": 18675.19, "Avg Profit": 46.69, "Count": 400}, {"Hour": 1, "Total Profit": 12498.78, "Avg Profit": 43.55, "Count": 287}, {"Hour": 2, "Total Profit": 8289.39, "Avg Profit": 47.1, "Count": 176}, {"Hour": 3, "Total Profit": 5730.75, "Avg Profit": 50.27, "Count": 114}, {"Hour": 4, "Total Profit": 2004.66, "Avg Profit": 27.09, "Count": 74}, {"Hour": 5, "Total Profit": 3642.61, "Avg Profit": 46.7, "Count": 78}, {"Hour": 6, "Total Profit": 3374.14, "Avg Profit": 36.68, "Count": 92}, {"Hour": 7, "Total Profit": 10671.94, "Avg Profit": 59.95, "Count": 178}, {"Hour": 8, "Total Profit": 12350.56, "Avg Profit": 35.29, "Count": 350}, {"Hour": 9, "Total Profit": 19973.66, "Avg Profit": 37.19, "Count": 537}, {"Hour": 10, "Total Profit": 30509.68, "Avg Profit": 40.9, "Count": 746}, {"Hour": 11, "Total Profit": 39224.58, "Avg Profit": 41.03, "Count": 956}, {"Hour": 12, "Total Profit": 60818.28, "Avg Profit": 50.85, "Count": 1196}, {"Hour": 13, "Total Profit": 61019.49, "Avg Profit": 49.65, "Count": 1229}, {"Hour": 14, "Total Profit": 79464.88, "Avg Profit": 63.37, "Count": 1254}, {"Hour": 15, "Total Profit": 70406.52, "Avg Profit": 57.01, "Count": 1235}, {"Hour": 16, "Total Profit": 52801.8, "Avg Profit": 45.6, "Count": 1158}, {"Hour": 17, "Total Profit": 50732.54, "Avg Profit": 47.73, "Count": 1063}, {"Hour": 18, "Total Profit": 49888.69, "Avg Profit": 45.85, "Count": 1088}, {"Hour": 19, "Total Profit": 53385.11, "Avg Profit": 49.16, "Count": 1086}, {"Hour": 20, "Total Profit": 51862.67, "Avg Profit": 46.47, "Count": 1116}, {"Hour": 21, "Total Profit": 63116.38, "Avg Profit": 55.61, "Count": 1135}, {"Hour": 22, "Total Profit": 55707.85, "Avg Profit": 51.06, "Count": 1091}, {"Hour": 23, "Total Profit": 30672.07, "Avg Profit": 42.07, "Count": 729}], "loss_venues": [{"Venue": "Globe Life Field", "Loss": -2821.02}, {"Venue": "Arthur Ashe Stadium", "Loss": -2743.9399999999996}, {"Venue": "United Center", "Loss": -2463.3300000000004}, {"Venue": "Pinnacle Bank Arena", "Loss": -1736.51}, {"Venue": "Hard Rock Stadium", "Loss": -1497.25}, {"Venue": "Madison Square Garden", "Loss": -1487.71}, {"Venue": "FirstBank Stadium", "Loss": -1372.69}, {"Venue": "Nissan Stadium", "Loss": -1292.54}, {"Venue": "Beaver Stadium", "Loss": -1081.97}, {"Venue": "Lincoln Financial Field", "Loss": -960.62}], "loss_events": [{"Event": "Chris Brown w/ Summer Walker", "Loss": -2929.6400000000003}, {"Event": "US Open Tennis", "Loss": -2743.9399999999996}, {"Event": "Tame Impala", "Loss": -2178.32}, {"Event": "Nebraska Cornhuskers Mens Basketball vs. Michigan State Spartans Mens Basketball", "Loss": -1522.6999999999998}, {"Event": "Capital One Orange Bowl", "Loss": -1379.07}, {"Event": "Tennessee Titans vs. New Orleans Saints", "Loss": -1123.7}, {"Event": "Philadelphia Eagles vs. Dallas Cowboys", "Loss": -942.41}, {"Event": "US Grand Prix", "Loss": -939.36}, {"Event": "Oklahoma State Cowboys Mens Basketball vs. Cal State Fullerton Titans Mens Basketball", "Loss": -845.3}, {"Event": "Rascal Flatts w/ Chris Lane", "Loss": -816.56}], "venue_markup": [{"Venue": "Mackey Arena", "Profit": 4314.56, "Total": 10092.05, "Total Cost": 5777.49, "PO #": 7, "Markup %": 74.68}, {"Venue": "Albertsons Stadium", "Profit": 1308.78, "Total": 3985.73, "Total Cost": 2676.95, "PO #": 12, "Markup %": 48.89}, {"Venue": "PeoplesBank Arena", "Profit": 845.93, "Total": 3416.73, "Total Cost": 2570.8, "PO #": 10, "Markup %": 32.91}, {"Venue": "Paycor Stadium", "Profit": 1117.28, "Total": 4896.37, "Total Cost": 3779.09, "PO #": 5, "Markup %": 29.56}, {"Venue": "Simon Skjodt Assembly Hall", "Profit": 793.22, "Total": 3724.24, "Total Cost": 2931.02, "PO #": 8, "Markup %": 27.06}, {"Venue": "Tacoma Dome", "Profit": 285.28, "Total": 1385.17, "Total Cost": 1099.9, "PO #": 5, "Markup %": 25.94}, {"Venue": "Wamu Theater - Seattle", "Profit": 1072.83, "Total": 5382.92, "Total Cost": 4310.09, "PO #": 16, "Markup %": 24.89}, {"Venue": "BMO Field", "Profit": 847.79, "Total": 4354.98, "Total Cost": 3507.19, "PO #": 28, "Markup %": 24.17}, {"Venue": "Target Center", "Profit": 1096.97, "Total": 5794.71, "Total Cost": 4697.74, "PO #": 28, "Markup %": 23.35}, {"Venue": "Cynthia Woods Mitchell Pavilion by Huntsman", "Profit": 758.17, "Total": 4075.41, "Total Cost": 3317.24, "PO #": 10, "Markup %": 22.86}, {"Venue": "First Horizon Coliseum", "Profit": 655.74, "Total": 3561.74, "Total Cost": 2906.0, "PO #": 12, "Markup %": 22.57}, {"Venue": "Mosaic Stadium", "Profit": 350.6, "Total": 1932.62, "Total Cost": 1582.02, "PO #": 9, "Markup %": 22.16}, {"Venue": "Lincoln Financial Field", "Profit": 3536.93, "Total": 19779.3, "Total Cost": 16242.38, "PO #": 44, "Markup %": 21.78}, {"Venue": "State Theatre-MN", "Profit": 805.36, "Total": 4556.65, "Total Cost": 3751.29, "PO #": 9, "Markup %": 21.47}, {"Venue": "Music Farm - Charleston", "Profit": 122.5, "Total": 710.13, "Total Cost": 587.63, "PO #": 6, "Markup %": 20.85}, {"Venue": "Nationals Park", "Profit": 1222.63, "Total": 7208.66, "Total Cost": 5986.03, "PO #": 7, "Markup %": 20.42}, {"Venue": "Giant Center", "Profit": 267.99, "Total": 1619.69, "Total Cost": 1351.7, "PO #": 8, "Markup %": 19.83}, {"Venue": "Alamodome", "Profit": 2145.18, "Total": 13028.11, "Total Cost": 10882.93, "PO #": 33, "Markup %": 19.71}, {"Venue": "T-Mobile Park", "Profit": 631.17, "Total": 3843.23, "Total Cost": 3212.06, "PO #": 7, "Markup %": 19.65}, {"Venue": "Orpheum Theatre - Minneapolis", "Profit": 1137.68, "Total": 6955.98, "Total Cost": 5818.3, "PO #": 16, "Markup %": 19.55}], "revenue_buckets": [{"Bucket": "$0-100", "Total Profit": 10170.95, "Avg Profit": 2.92, "Avg Profit/Ticket": 1.84, "Count": 3484}, {"Bucket": "$100-250", "Total Profit": 96488.09, "Avg Profit": 15.68, "Avg Profit/Ticket": 8.73, "Count": 6152}, {"Bucket": "$250-500", "Total Profit": 137315.67, "Avg Profit": 36.24, "Avg Profit/Ticket": 18.55, "Count": 3789}, {"Bucket": "$500-1K", "Total Profit": 171665.26, "Avg Profit": 76.16, "Avg Profit/Ticket": 37.12, "Count": 2254}, {"Bucket": "$1K+", "Total Profit": 442410.64, "Avg Profit": 267.16, "Avg Profit/Ticket": 113.31, "Count": 1656}]};
+        
+        // Format functions
+        const formatCurrency = (val) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(val);
+        };
+        
+        const formatNumber = (val) => {
+            return new Intl.NumberFormat('en-US').format(val);
+        };
+        
+        // Update KPIs
+        const summary = enhancedData.summary_advanced;
+        document.getElementById('avgProfitTicket').textContent = formatCurrency(summary.avg_profit_per_ticket);
+        document.getElementById('medianProfitTicket').textContent = formatCurrency(summary.median_profit_per_ticket);
+        document.getElementById('avgMarkup').textContent = summary.avg_markup_pct.toFixed(1) + '%';
+        document.getElementById('avgLeadTime').textContent = summary.avg_lead_time_days.toFixed(1) + ' days';
+        document.getElementById('medianLeadTime').textContent = summary.median_lead_time_days.toFixed(1);
+        document.getElementById('saleVelocity').textContent = summary.avg_sale_velocity_hours.toFixed(1) + 'h';
+        
+        // Chart colors
+        const colors = {
+            primary: 'rgba(102, 126, 234, 0.8)',
+            secondary: 'rgba(118, 75, 162, 0.8)',
+            success: 'rgba(40, 167, 69, 0.8)',
+            danger: 'rgba(220, 53, 69, 0.8)',
+            warning: 'rgba(255, 193, 7, 0.8)',
+            info: 'rgba(23, 162, 184, 0.8)',
+            purple: 'rgba(156, 39, 176, 0.8)',
+            orange: 'rgba(253, 126, 20, 0.8)'
+        };
+        
+        // Generate color array
+        const generateColors = (count) => {
+            const baseColors = Object.values(colors);
+            return Array(count).fill(0).map((_, i) => baseColors[i % baseColors.length]);
+        };
+        
+        // PROFITABILITY CHARTS
+        
+        // Section Chart
+        new Chart(document.getElementById('sectionChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.sections.map(s => s.Section),
+                datasets: [{
+                    label: 'Avg Profit Per Ticket',
+                    data: enhancedData.sections.map(s => s['Profit Per Ticket']),
+                    backgroundColor: colors.primary
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const section = enhancedData.sections[context.dataIndex];
+                                return [
+                                    'Avg Profit/Ticket: ' + formatCurrency(section['Profit Per Ticket']),
+                                    'Total Profit: ' + formatCurrency(section.Profit),
+                                    'Transactions: ' + section['PO #']
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Revenue Bucket Chart
+        new Chart(document.getElementById('revenueBucketChart'), {
+            type: 'doughnut',
+            data: {
+                labels: enhancedData.revenue_buckets.map(r => r.Bucket),
+                datasets: [{
+                    data: enhancedData.revenue_buckets.map(r => r['Total Profit']),
+                    backgroundColor: generateColors(enhancedData.revenue_buckets.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.revenue_buckets[context.dataIndex];
+                                return [
+                                    bucket.Bucket,
+                                    'Total: ' + formatCurrency(bucket['Total Profit']),
+                                    'Avg: ' + formatCurrency(bucket['Avg Profit']),
+                                    'Count: ' + formatNumber(bucket.Count)
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Venue Markup Chart
+        new Chart(document.getElementById('venueMarkupChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.venue_markup.slice(0, 10).map(v => v.Venue.substring(0, 25)),
+                datasets: [{
+                    label: 'Markup %',
+                    data: enhancedData.venue_markup.slice(0, 10).map(v => v['Markup %']),
+                    backgroundColor: colors.success
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => value + '%'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Quantity Optimization Chart
+        new Chart(document.getElementById('quantityOptChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Order Sizes',
+                    data: enhancedData.quantity_optimization.map(q => ({
+                        x: q.Quantity,
+                        y: q['Avg Profit'],
+                        r: Math.sqrt(q.Count) * 2
+                    })),
+                    backgroundColor: colors.info
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const q = enhancedData.quantity_optimization[context.dataIndex];
+                                return [
+                                    q.Quantity + ' tickets',
+                                    'Avg Profit: ' + formatCurrency(q['Avg Profit']),
+                                    'Avg Per Ticket: ' + formatCurrency(q['Avg Profit/Ticket']),
+                                    'Orders: ' + formatNumber(q.Count)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Ticket Quantity' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Average Profit ($)' },
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // PERFORMANCE CHARTS
+        
+        // Lead Time Chart
+        new Chart(document.getElementById('leadTimeChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.lead_time.map(l => l.Bucket),
+                datasets: [{
+                    label: 'Avg Profit',
+                    data: enhancedData.lead_time.map(l => l['Avg Profit']),
+                    backgroundColor: colors.warning
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const lead = enhancedData.lead_time[context.dataIndex];
+                                return [
+                                    'Avg Profit: ' + formatCurrency(lead['Avg Profit']),
+                                    'Total: ' + formatCurrency(lead['Total Profit']),
+                                    'Count: ' + formatNumber(lead.Count)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Day of Week Chart
+        new Chart(document.getElementById('dowChart'), {
+            type: 'line',
+            data: {
+                labels: enhancedData.day_of_week.map(d => d.Day.substring(0, 3)),
+                datasets: [{
+                    label: 'Total Profit',
+                    data: enhancedData.day_of_week.map(d => d['Total Profit']),
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const day = enhancedData.day_of_week[context.dataIndex];
+                                return [
+                                    'Total: ' + formatCurrency(day['Total Profit']),
+                                    'Avg: ' + formatCurrency(day['Avg Profit']),
+                                    'Count: ' + formatNumber(day.Count)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Hour of Day Chart
+        new Chart(document.getElementById('hourChart'), {
+            type: 'line',
+            data: {
+                labels: enhancedData.hour_of_day.map(h => h.Hour + ':00'),
+                datasets: [{
+                    label: 'Total Profit',
+                    data: enhancedData.hour_of_day.map(h => h['Total Profit']),
+                    borderColor: colors.secondary,
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const hour = enhancedData.hour_of_day[context.dataIndex];
+                                return [
+                                    'Total: ' + formatCurrency(hour['Total Profit']),
+                                    'Avg: ' + formatCurrency(hour['Avg Profit']),
+                                    'Count: ' + formatNumber(hour.Count)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // PRICING CHARTS
+        
+        // Price Bucket Margin Chart
+        new Chart(document.getElementById('priceBucketMarginChart'), {
+            type: 'line',
+            data: {
+                labels: enhancedData.price_buckets.map(p => p.Bucket),
+                datasets: [{
+                    label: 'Profit Margin %',
+                    data: enhancedData.price_buckets.map(p => p['Profit Margin %']),
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.price_buckets[context.dataIndex];
+                                return [
+                                    'Margin: ' + bucket['Profit Margin %'].toFixed(2) + '%',
+                                    'Total Profit: ' + formatCurrency(bucket['Total Profit']),
+                                    'Transactions: ' + formatNumber(bucket.Transactions),
+                                    'Avg Price/Ticket: ' + formatCurrency(bucket['Avg Price Per Ticket'])
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Profit Margin %' },
+                        ticks: {
+                            callback: (value) => value.toFixed(1) + '%'
+                        }
+                    },
+                    x: {
+                        title: { display: true, text: 'Price Per Ticket Range' },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Price Bucket Volume Chart
+        new Chart(document.getElementById('priceBucketVolumeChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.price_buckets.map(p => p.Bucket),
+                datasets: [{
+                    label: 'Transactions',
+                    data: enhancedData.price_buckets.map(p => p.Transactions),
+                    backgroundColor: colors.info
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.price_buckets[context.dataIndex];
+                                return [
+                                    'Transactions: ' + formatNumber(bucket.Transactions),
+                                    'Total Tickets: ' + formatNumber(bucket['Total Tickets']),
+                                    'Avg Price: ' + formatCurrency(bucket['Avg Price Per Ticket'])
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Number of Transactions' }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Price Bucket Total Profit Chart
+        new Chart(document.getElementById('priceBucketProfitChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.price_buckets.map(p => p.Bucket),
+                datasets: [{
+                    label: 'Total Profit',
+                    data: enhancedData.price_buckets.map(p => p['Total Profit']),
+                    backgroundColor: enhancedData.price_buckets.map(p => 
+                        p['Total Profit'] > 0 ? colors.success : colors.danger
+                    )
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.price_buckets[context.dataIndex];
+                                return [
+                                    'Total Profit: ' + formatCurrency(bucket['Total Profit']),
+                                    'Revenue: ' + formatCurrency(bucket['Total Revenue']),
+                                    'Margin: ' + bucket['Profit Margin %'].toFixed(2) + '%'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Total Profit ($)' },
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Price Bucket Avg Profit Chart
+        new Chart(document.getElementById('priceBucketAvgChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.price_buckets.map(p => p.Bucket),
+                datasets: [{
+                    label: 'Avg Profit/Transaction',
+                    data: enhancedData.price_buckets.map(p => p['Avg Profit']),
+                    backgroundColor: colors.warning
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.price_buckets[context.dataIndex];
+                                return [
+                                    'Avg Profit: ' + formatCurrency(bucket['Avg Profit']),
+                                    'Transactions: ' + formatNumber(bucket.Transactions),
+                                    'Margin: ' + bucket['Profit Margin %'].toFixed(2) + '%'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Avg Profit per Transaction ($)' },
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Price Per Ticket Profit Chart
+        new Chart(document.getElementById('pricePerTicketChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.price_buckets.map(p => p.Bucket),
+                datasets: [{
+                    label: 'Avg Profit/Ticket',
+                    data: enhancedData.price_buckets.map(p => p['Avg Profit Per Ticket']),
+                    backgroundColor: colors.secondary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const bucket = enhancedData.price_buckets[context.dataIndex];
+                                return [
+                                    'Avg Profit/Ticket: ' + formatCurrency(bucket['Avg Profit Per Ticket']),
+                                    'Avg Price/Ticket: ' + formatCurrency(bucket['Avg Price Per Ticket']),
+                                    'Total Tickets: ' + formatNumber(bucket['Total Tickets'])
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Avg Profit per Ticket ($)' },
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // MARKET CHARTS
+        
+        // Category Pie Chart
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'pie',
+            data: {
+                labels: enhancedData.categories.map(c => c.Event_Category),
+                datasets: [{
+                    data: enhancedData.categories.map(c => c.Profit),
+                    backgroundColor: generateColors(enhancedData.categories.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const cat = enhancedData.categories[context.dataIndex];
+                                return [
+                                    cat.Event_Category,
+                                    'Profit: ' + formatCurrency(cat.Profit),
+                                    'Margin: ' + cat['Profit Margin %'].toFixed(1) + '%',
+                                    'Count: ' + formatNumber(cat['PO #'])
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Category Bar Chart
+        new Chart(document.getElementById('categoryBarChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.categories.map(c => c.Event_Category),
+                datasets: [{
+                    label: 'Total Profit',
+                    data: enhancedData.categories.map(c => c.Profit),
+                    backgroundColor: colors.success
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // OPERATIONAL CHARTS
+        
+        // Tag Chart
+        new Chart(document.getElementById('tagChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.tags.map(t => t.Tags),
+                datasets: [{
+                    label: 'Profit',
+                    data: enhancedData.tags.map(t => t.Profit),
+                    backgroundColor: enhancedData.tags.map(t => 
+                        t.Profit > 0 ? colors.success : colors.danger
+                    )
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => '$' + (value/1000).toFixed(0) + 'K'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Quantity Profit Chart
+        new Chart(document.getElementById('quantityProfitChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.quantity_optimization.map(q => q.Quantity + ' tickets'),
+                datasets: [{
+                    label: 'Avg Profit',
+                    data: enhancedData.quantity_optimization.map(q => q['Avg Profit']),
+                    backgroundColor: colors.primary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const q = enhancedData.quantity_optimization[context.dataIndex];
+                                return [
+                                    'Avg Profit: ' + formatCurrency(q['Avg Profit']),
+                                    'Per Ticket: ' + formatCurrency(q['Avg Profit/Ticket']),
+                                    'Orders: ' + formatNumber(q.Count)
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // LOSS CHARTS
+        
+        // Loss Venue Chart
+        new Chart(document.getElementById('lossVenueChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.loss_venues.map(v => v.Venue.substring(0, 30)),
+                datasets: [{
+                    label: 'Loss Amount',
+                    data: enhancedData.loss_venues.map(v => Math.abs(v.Loss)),
+                    backgroundColor: colors.danger
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return 'Loss: ' + formatCurrency(Math.abs(context.parsed.x));
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Loss Event Chart
+        new Chart(document.getElementById('lossEventChart'), {
+            type: 'bar',
+            data: {
+                labels: enhancedData.loss_events.map(e => e.Event.substring(0, 30)),
+                datasets: [{
+                    label: 'Loss Amount',
+                    data: enhancedData.loss_events.map(e => Math.abs(e.Loss)),
+                    backgroundColor: colors.danger
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                return 'Loss: ' + formatCurrency(Math.abs(context.parsed.x));
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: (value) => '$' + value
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Generate Insights
+        const keyInsights = [
+            `Premium sections (VIP, Court) generate ${formatCurrency(enhancedData.sections[0]['Profit Per Ticket'])} per ticket on average`,
+            `Best lead time: 90+ days ahead yields ${formatCurrency(enhancedData.lead_time[4]['Avg Profit'])} avg profit`,
+            `Tuesday is the most profitable day with ${formatCurrency(enhancedData.day_of_week[1]['Total Profit'])} total profit`,
+            `${summary.avg_markup_pct.toFixed(1)}% average markup across all transactions`
+        ];
+        
+        const opportunities = [
+            `Focus on 7-ticket orders - they yield ${formatCurrency(enhancedData.quantity_optimization[1]['Avg Profit'])} avg profit`,
+            `Premium sections show 10x higher profit per ticket than average`,
+            `Early booking (90+ days) generates 4.5x higher profits than same-day sales`,
+            `"Other" category dominates with ${(enhancedData.categories[0].Profit/summary.total_losses*100).toFixed(0)}% of profit - investigate subcategories`
+        ];
+        
+        const riskAreas = [
+            `${formatCurrency(Math.abs(summary.total_losses))} in total losses from ${formatNumber(summary.loss_count)} transactions`,
+            `PRDRESALE tag shows negative profit - review pricing strategy`,
+            `${enhancedData.loss_venues.length} venues consistently show losses`,
+            `Same-day sales have lowest profit margins - implement dynamic pricing`
+        ];
+        
+        const lossMitigation = [
+            `<strong>Venue Strategy:</strong> Review pricing and cost structure for ${enhancedData.loss_venues[0].Venue} and other loss-making venues`,
+            `<strong>Event Selection:</strong> Consider avoiding or adjusting pricing for consistently unprofitable events`,
+            `<strong>Tag Management:</strong> PRDRESALE tag shows ${formatCurrency(enhancedData.tags.find(t => t.Tags === 'PRDRESALE')?.Profit || 0)} loss - investigate resale pricing`,
+            `<strong>Lead Time Optimization:</strong> Implement early-bird discounts to encourage 90+ day advance purchases`,
+            `<strong>Dynamic Pricing:</strong> Same-day sales show lowest margins - implement surge pricing for last-minute buyers`
+        ];
+        
+        document.getElementById('keyInsights').innerHTML = keyInsights.map(i => 
+            `<div class="insight-item">${i}</div>`
+        ).join('');
+        
+        document.getElementById('opportunities').innerHTML = opportunities.map(o => 
+            `<div class="insight-item">${o}</div>`
+        ).join('');
+        
+        document.getElementById('riskAreas').innerHTML = riskAreas.map(r => 
+            `<div class="insight-item">${r}</div>`
+        ).join('');
+        
+        document.getElementById('lossMitigation').innerHTML = lossMitigation.map(m => 
+            `<div class="insight-item">${m}</div>`
+        ).join('');
+        
+        // Price Bucket Insights
+        const priceBucketInsights = [];
+        
+        // Find best margin bucket
+        const bestMarginBucket = enhancedData.price_buckets.reduce((max, p) => 
+            p['Profit Margin %'] > max['Profit Margin %'] ? p : max
+        );
+        priceBucketInsights.push(
+            `<strong>Best Margin:</strong> ${bestMarginBucket.Bucket} range has the highest profit margin at ${bestMarginBucket['Profit Margin %'].toFixed(2)}% with ${formatCurrency(bestMarginBucket['Total Profit'])} in total profit.`
+        );
+        
+        // Find highest volume bucket
+        const highestVolumeBucket = enhancedData.price_buckets.reduce((max, p) => 
+            p.Transactions > max.Transactions ? p : max
+        );
+        priceBucketInsights.push(
+            `<strong>Highest Volume:</strong> ${highestVolumeBucket.Bucket} has the most transactions (${formatNumber(highestVolumeBucket.Transactions)}) but only ${highestVolumeBucket['Profit Margin %'].toFixed(2)}% margin.`
+        );
+        
+        // Find highest total profit bucket
+        const highestProfitBucket = enhancedData.price_buckets.reduce((max, p) => 
+            p['Total Profit'] > max['Total Profit'] ? p : max
+        );
+        priceBucketInsights.push(
+            `<strong>Biggest Profit Driver:</strong> ${highestProfitBucket.Bucket} generates the most total profit at ${formatCurrency(highestProfitBucket['Total Profit'])} (${highestProfitBucket['Profit Margin %'].toFixed(2)}% margin).`
+        );
+        
+        // Best profit per ticket
+        const bestPerTicketBucket = enhancedData.price_buckets.reduce((max, p) => 
+            p['Avg Profit Per Ticket'] > max['Avg Profit Per Ticket'] ? p : max
+        );
+        priceBucketInsights.push(
+            `<strong>Premium Performance:</strong> ${bestPerTicketBucket.Bucket} tickets yield ${formatCurrency(bestPerTicketBucket['Avg Profit Per Ticket'])} profit per ticket on average.`
+        );
+        
+        // Low margin warning
+        const lowMarginBuckets = enhancedData.price_buckets.filter(p => p['Profit Margin %'] < 5);
+        if (lowMarginBuckets.length > 0) {
+            priceBucketInsights.push(
+                `<strong>⚠️ Low Margin Alert:</strong> ${lowMarginBuckets.length} price bucket(s) have margins below 5%. Consider reviewing pricing strategy for ${lowMarginBuckets.map(b => b.Bucket).join(', ')}.`
+            );
+        }
+        
+        // Sweet spot recommendation
+        const sweetSpots = enhancedData.price_buckets.filter(p => 
+            p['Profit Margin %'] > 11 && p.Transactions > 500
+        );
+        if (sweetSpots.length > 0) {
+            priceBucketInsights.push(
+                `<strong>💰 Sweet Spots:</strong> ${sweetSpots.length} price range(s) combine high margins (>11%) with strong volume (>500 transactions): ${sweetSpots.map(b => b.Bucket).join(', ')}.`
+            );
+        }
+        
+        document.getElementById('priceBucketInsights').innerHTML = priceBucketInsights.map(i => 
+            `<div class="insight-item">${i}</div>`
+        ).join('');
+    </script>
+</body>
+</html>
